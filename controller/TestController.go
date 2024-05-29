@@ -4,9 +4,7 @@ import (
 	"github.com/po3nx/fgtest/database"
 	"github.com/po3nx/fgtest/models"
 	"strconv"
-
 	"github.com/gofiber/fiber/v2"
-
 )
 
 //Hello
@@ -14,8 +12,8 @@ func Hello(c *fiber.Ctx) error {
 	return c.SendString("fiber")
 }
 
-//AddBook
-func AddBook(c *fiber.Ctx) error {
+//Add
+func Add(c *fiber.Ctx) error {
 	test := new(models.Test)
 	if err := c.BodyParser(test); err != nil {
 		return c.Status(400).JSON(err.Error())
@@ -29,7 +27,8 @@ func AddBook(c *fiber.Ctx) error {
 	return c.Status(200).JSON(test)
 }
 
-func GetBook(c *fiber.Ctx) error {
+//GetByID
+func GetByID(c *fiber.Ctx) error {
 	test := []models.Test{}
 
 	database.DBConn.First(&test, c.Params("id"))
@@ -37,8 +36,8 @@ func GetBook(c *fiber.Ctx) error {
 	return c.Status(200).JSON(test)
 }
 
-//AllBooks
-func AllBooks(c *fiber.Ctx) error {
+//GetAll
+func GetAll(c *fiber.Ctx) error {
 	test := []models.Test{}
 
 	database.DBConn.Find(&test)
