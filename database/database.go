@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 	"fmt"
-	"strconv"
+	//"strconv"
 	"github.com/po3nx/fgtest/models"
 	"github.com/po3nx/fgtest/config"
 	"gorm.io/driver/sqlserver"
@@ -16,16 +16,15 @@ var (
 )
 func ConnectDb() {
 	var err error
-	p := config.Config("DB_PORT")
-	port, err := strconv.ParseUint(p, 10, 32)
+	// p := config.Config("DB_PORT")
+	// port, err := strconv.ParseUint(p, 10, 32)
 	if err != nil {
 		panic(err)
 	}
-    dsn := fmt.Sprintf("sqlserver://%s:%s@%s:%d?database=%s",
+    dsn := fmt.Sprintf("sqlserver://%s:%s@%s?database=%s",
 	config.Config("DB_USER"),
 	config.Config("DB_PASSWORD"),
 	config.Config("DB_HOST"),
-	port,
 	config.Config("DB_NAME"))
     db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
     if err != nil {
@@ -33,6 +32,7 @@ func ConnectDb() {
 		os.Exit(2)
     }
 	log.Println("connected")
-	db.AutoMigrate(&models.Test{})
+	db.AutoMigrate(&models.Book{})
+	db.AutoMigrate(&models.User{})
     DBConn = db
 }

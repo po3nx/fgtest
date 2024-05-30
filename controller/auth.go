@@ -4,28 +4,44 @@ import (
 	"time"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/po3nx/fgtest/database"
+	"github.com/po3nx/fgtest/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Login get user and password
 func Login(c *fiber.Ctx) error {
+	user := []models.User{}
 	type LoginInput struct {
-		Identity string `json:"identity"`
+		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 	var input LoginInput
 	if err := c.BodyParser(&input); err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
-	identity := input.Identity
-	pass := input.Password
-	if identity != "ender" || pass != "ender" {
+	username := input.Username
+	pass := []byte(input.Password)
+	//hashedPassword, err := bcrypt.GenerateFromPassword(pass, bcrypt.DefaultCost)
+	//if err != nil {
+    //    panic(err)
+    //}
+	if username == "" || pass == nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
-
+	//db.Where(&User{Name: "user", Gender: "Male"}).First(&user)
+	r :=database.DBConn.Model(&models.User{}).Where("username = ?", username).First(&user)
+	if (r.RowsAffected == 0){
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+	err := bcrypt.CompareHashAndPassword(user.Password, pass)
+	if err != nil {
+        return c.SendStatus(fiber.StatusUnauthorized)
+    }
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
-	claims["identity"] = identity
+	claims["username"] = username
 	claims["admin"] = true
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 

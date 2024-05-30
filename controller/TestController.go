@@ -14,7 +14,7 @@ func Hello(c *fiber.Ctx) error {
 
 //Add
 func Add(c *fiber.Ctx) error {
-	test := new(models.Test)
+	test := new(models.Book)
 	if err := c.BodyParser(test); err != nil {
 		return c.Status(400).JSON(err.Error())
 	}
@@ -29,7 +29,7 @@ func Add(c *fiber.Ctx) error {
 
 //GetByID
 func GetByID(c *fiber.Ctx) error {
-	test := []models.Test{}
+	test := []models.Book{}
 
 	database.DBConn.First(&test, c.Params("id"))
 
@@ -38,7 +38,7 @@ func GetByID(c *fiber.Ctx) error {
 
 //GetAll
 func GetAll(c *fiber.Ctx) error {
-	test := []models.Test{}
+	test := []models.Book{}
 
 	database.DBConn.Find(&test)
 
@@ -47,20 +47,20 @@ func GetAll(c *fiber.Ctx) error {
 
 //Update
 func Update(c *fiber.Ctx) error {
-	test := new(models.Test)
+	test := new(models.Book)
 	if err := c.BodyParser(test); err != nil {
 		return c.Status(400).JSON(err.Error())
 	}
 	id, _ := strconv.Atoi(c.Params("id"))
 
-	database.DBConn.Model(&models.Test{}).Where("id = ?", id).Update("Username", test.Username)
+	database.DBConn.Model(&models.Book{}).Where("id = ?", id).Update("Title", test.Title)
 
 	return c.Status(400).JSON("updated")
 }
 
 //Delete
 func Delete(c *fiber.Ctx) error {
-	test := new(models.Test)
+	test := new(models.Book)
 
 	id, _ := strconv.Atoi(c.Params("id"))
 
