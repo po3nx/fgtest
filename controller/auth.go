@@ -11,7 +11,7 @@ import (
 
 // Login get user and password
 func Login(c *fiber.Ctx) error {
-	user := []models.User{}
+	user := models.User{}
 	type LoginInput struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -21,12 +21,12 @@ func Login(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	username := input.Username
-	pass := []byte(input.Password)
+	pass := input.Password
 	//hashedPassword, err := bcrypt.GenerateFromPassword(pass, bcrypt.DefaultCost)
 	//if err != nil {
     //    panic(err)
     //}
-	if username == "" || pass == nil {
+	if username == "" || pass == "" {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	//db.Where(&User{Name: "user", Gender: "Male"}).First(&user)
@@ -34,7 +34,7 @@ func Login(c *fiber.Ctx) error {
 	if (r.RowsAffected == 0){
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
-	err := bcrypt.CompareHashAndPassword(user.Password, pass)
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pass))
 	if err != nil {
         return c.SendStatus(fiber.StatusUnauthorized)
     }
