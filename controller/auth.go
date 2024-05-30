@@ -22,13 +22,7 @@ func Login(c *fiber.Ctx) error {
 	}
 	username := input.Username
 	pass := input.Password
-	//hashedPassword, err := bcrypt.GenerateFromPassword(pass, bcrypt.DefaultCost)
-	//if err != nil {
-    //    panic(err)
-    //}
-	if username == "" || pass == "" {
-		return c.SendStatus(fiber.StatusUnauthorized)
-	}
+	
 	//db.Where(&User{Name: "user", Gender: "Male"}).First(&user)
 	r :=database.DBConn.Model(&models.User{}).Where("username = ?", username).First(&user)
 	if (r.RowsAffected == 0){
@@ -51,4 +45,31 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"status": "success", "message": "Success login", "data": t})
+}
+
+func Register(c *fiber.Ctx) error {
+	type RegisterInput struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Email string `json:"email"`
+	}
+	var input RegisterInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+	username := input.Username
+	pass := []byte(input.Password)
+	email := input.Email
+	hashedPassword, err := bcrypt.GenerateFromPassword(pass, bcrypt.DefaultCost)
+	if err != nil {
+        panic(err)
+    }
+	user := models.User{Username :  username , Password : string(hashedPassword), Email : email}
+
+	result := database.DBConn.Create(&user)
+    if result.Error != nil {
+        return c.Status(400).JSON(result.Error) 
+    }
+
+	return c.Status(200).JSON(user)
 }
