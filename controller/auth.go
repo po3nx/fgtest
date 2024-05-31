@@ -7,6 +7,7 @@ import (
 	"github.com/po3nx/fgtest/database"
 	"github.com/po3nx/fgtest/models"
 	"golang.org/x/crypto/bcrypt"
+	"github.com/po3nx/fgtest/utils"
 )
 
 // Login get user and password
@@ -43,8 +44,7 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
-
-	return c.JSON(fiber.Map{"status": "success", "message": "Success login", "data": t})
+	return utils.JSONResponse(c, "success", "Success login", t)
 }
 
 func Register(c *fiber.Ctx) error {
@@ -68,8 +68,8 @@ func Register(c *fiber.Ctx) error {
 
 	result := database.DBConn.Create(&user)
     if result.Error != nil {
-        return c.Status(400).JSON(result.Error) 
+		return utils.JSONResponse(c, "error", "Registration Failed", result.Error)
     }
 
-	return c.Status(200).JSON(user)
+	return utils.JSONResponse(c, "success", "User registered successfully", user)
 }
