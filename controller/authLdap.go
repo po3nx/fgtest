@@ -5,8 +5,11 @@ import (
 	"time"
     "github.com/go-ldap/ldap"
 	"github.com/po3nx/fgtest/config"
+	"github.com/po3nx/fgtest/database"
+	"github.com/po3nx/fgtest/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 	"strconv"
 )
 
@@ -121,6 +124,24 @@ func LoginLDAP(c *fiber.Ctx) error {
 			"data":    nil,
 		})
 	}
+	var user models.User
+	r :=database.DBConn.Model(&models.User{}).Where("username = ?", data.ID).First(&user)
+	pass := []byte(loginReq.Password)
+	hashedPassword, err := bcrypt.GenerateFromPassword(pass, bcrypt.DefaultCost)
+	if r.Error != nil {
+        // User not found, create a new user
+        user = models.User{
+            Username: data.ID,
+            Email:    data.Email,
+			Password :string(hashedPassword),
+        }
+        database.DBConn.Create(&user)
+    } else {
+        // User found, update the user data
+        user.Email = data.Email
+		user.Password = string(hashedPassword)
+        database.DBConn.Save(&user)
+    }
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
