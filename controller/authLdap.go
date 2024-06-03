@@ -44,17 +44,17 @@ type UserLDAPData struct {
     FullName string
 }
 
-func AuthUsingLDAP(username, password string) (bool, *UserLDAPData, error) {
+func AuthUsingLDAP(username, password string) ( *UserLDAPData, error) {
 	ldapConfig := LoadLDAPConfig()
     l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapConfig.Server, ldapConfig.Port))
     if err != nil {
-        return false, nil, err
+        return  nil, err
     }
     defer l.Close()
 
     err = l.Bind(ldapConfig.BindDN, ldapConfig.Password)
 	if err != nil {
-		return false, nil, err
+		return  nil, err
 	}
 	searchRequest := ldap.NewSearchRequest(
 		ldapConfig.SearchDN,
@@ -69,17 +69,17 @@ func AuthUsingLDAP(username, password string) (bool, *UserLDAPData, error) {
 	)
 	sr, err := l.Search(searchRequest)
 	if err != nil {
-		return false, nil, err
+		return  nil, err
 	}
 
 	if len(sr.Entries) == 0 {
-		return false, nil, fmt.Errorf("User not found")
+		return  nil, fmt.Errorf("User not found")
 	}
 	entry := sr.Entries[0]
 
 	err = l.Bind(entry.DN, password)
 	if err != nil {
-		return false, nil, err
+		return  nil, err
 	}
 	data := new(UserLDAPData)
 	data.ID = username
@@ -95,7 +95,7 @@ func AuthUsingLDAP(username, password string) (bool, *UserLDAPData, error) {
 		}
 	}
 
-	return true, data, nil
+	return data, nil
 }
 func LoginLDAP(c *fiber.Ctx) error {
 	var loginReq LoginRequest
@@ -108,22 +108,31 @@ func LoginLDAP(c *fiber.Ctx) error {
 		})
 	}
 
-	success, data, err := AuthUsingLDAP(loginReq.Username, loginReq.Password)
+	data, err := AuthUsingLDAP(loginReq.Username, loginReq.Password)
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"status":  "error",
-			"message": "Authentication failed",
-			"data":    err.Error(),
-		})
+		var user models.User
+		r := database.DBConn.Model(&models.User{}).Where("username = ?", loginReq.Username).First(&user)
+		if r.RowsAffected == 0 {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"status":  "error",
+				"message": "Invalid username or password",
+				"data":    nil,
+			})
+		}
+		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginReq.Password))
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"status":  "error",
+				"message": "Invalid username or password",
+				"data":    nil,
+			})
+		}
+		data = &UserLDAPData{
+			ID:    user.Username,
+			Email: user.Email,
+		}
 	}
 
-	if !success {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"status":  "error",
-			"message": "Invalid username or password",
-			"data":    nil,
-		})
-	}
 	var user models.User
 	r :=database.DBConn.Model(&models.User{}).Where("username = ?", data.ID).First(&user)
 	pass := []byte(loginReq.Password)
