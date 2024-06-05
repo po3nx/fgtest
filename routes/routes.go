@@ -18,7 +18,6 @@ func SetUpRoutes(app *fiber.App) {
 	auth.Post("/register", controller.Register)
 
 	product := api.Group("/product")
-	product.Get("/hello", controller.Hello)
 	product.Get("/allbooks", controller.GetAll)
 	product.Get("/book/:id", controller.GetByID)
 	product.Post("/book", middleware.Protected(), controller.Add)

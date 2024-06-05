@@ -8,11 +8,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-//Hello
-func Hello(c *fiber.Ctx) error {
-	return utils.JSONResponse(c, "success", "Hello, Fiber!", nil)
-}
-
 //Add
 func Add(c *fiber.Ctx) error {
 	book := new(models.Book)
